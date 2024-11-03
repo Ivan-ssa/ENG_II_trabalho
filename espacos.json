@@ -1,0 +1,32 @@
+[
+   {
+      "id": 1,
+      "tipo": "Salão de Festas",
+      "nome": "Salão de Festas"
+   },
+   {
+      "id": 2,
+      "tipo": "Churrasqueira",
+      "nome": "Churrasqueira 1"
+   },
+   {
+      "id": 3,
+      "tipo": "Churrasqueira",
+      "nome": "Churrasqueira 2"
+   },
+   {
+      "id": 4,
+      "tipo": "Churrasqueira",
+      "nome": "Churrasqueira 3"
+   },
+   {
+      "id": 5,
+      "tipo": "Churrasqueira",
+      "nome": "Churrasqueira 4"
+   },
+   {
+      "id": 6,
+      "tipo": "Churrasqueira",
+      "nome": "Churrasqueira 5"
+   }
+]
