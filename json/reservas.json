@@ -1,0 +1,22 @@
+[
+   {
+      "data": "11-12-24",
+      "espaco_id": 1,
+      "morador_id": "203B"
+   },
+   {
+      "data": "01-12-24",
+      "espaco_id": 3,
+      "morador_id": "100A"
+   },
+   {
+      "data": "01-12-24",
+      "espaco_id": 2,
+      "morador_id": "203B"
+   },
+   {
+      "data": "05-11-24",
+      "espaco_id": 6,
+      "morador_id": "100A"
+   }
+]

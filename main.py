@@ -3,6 +3,8 @@ from morador import Morador, lista_moradores
 from reserva import Reserva, lista_reservas
 from funcion import carregar_dados,adicionar_morador,fazer_reserva
 
+
+
 # Carregar dados do arquivo
 carregar_dados()
 
@@ -39,4 +41,3 @@ def menu():
 
 # Executa o menu
 menu()
-1
