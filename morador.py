@@ -1,8 +1,16 @@
 import json
-    
+
 lista_moradores = []
+
 class Morador:
-    def __init__(self,nome, apartamento, bloco):
+    def __init__(self, nome, apartamento, bloco):
+        if not nome:
+            raise ValueError("O nome não pode ser vazio.")
+        if not apartamento or int(apartamento) < 0:
+            raise ValueError("O apartamento deve ser um número válido e não negativo.")
+        if not bloco:
+            raise ValueError("O bloco não pode ser vazio.")
+
         self.id = f"{apartamento}{bloco}"
         self.nome = nome
         self.apartamento = apartamento
@@ -22,5 +30,5 @@ class Morador:
         ]
         
         # Salva no arquivo JSON
-        with open('moradores.json', 'w', encoding='utf-8') as file:
+        with open('json\moradores.json', 'w', encoding='utf-8') as file:
             json.dump(moradores_sem_id, file, indent=3, ensure_ascii=False)

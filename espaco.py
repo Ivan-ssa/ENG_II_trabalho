@@ -21,7 +21,7 @@ class Espaco:
     def inicializar_espacos():
         """Verifica se o arquivo existe e inicializa os espaços se estiver vazio."""
         try:
-            with open('espacos.json', 'r', encoding='utf-8') as file:
+            with open('json/espacos.json', 'r', encoding='utf-8') as file:
                 espacos_salvos = json.load(file)
                 tipos_existentes = {espaco["tipo"] for espaco in lista_espacos}
                 for espaco in espacos_salvos:
@@ -42,6 +42,6 @@ class Espaco:
     @staticmethod
     def salvar_em_json():
         """Salva a lista de espaços no arquivo JSON."""
-        with open('espacos.json', 'w', encoding='utf-8') as file:
+        with open('json/espacos.json', 'w', encoding='utf-8') as file:
             json.dump([espaco.__dict__ for espaco in lista_espacos], file, indent=3, ensure_ascii=False)
 
