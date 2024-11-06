@@ -77,6 +77,24 @@ def adicionar_morador():
 
 
 
+# Rota para atualizar uma reserva existente
+@app.route('/reservas/<int:id>', methods=['PUT'])
+def atualizar_reserva(id):
+    reservas = ler_reservas()  # Lê as reservas do arquivo JSON
+    reserva = next((res for res in reservas if res['id'] == id), None)  # Procura a reserva pelo ID
+    
+    if reserva:
+        # Atualiza a reserva com os novos dados do corpo da requisição
+        dados_atualizados = request.get_json()
+        reserva.update(dados_atualizados)
+        
+        # Salva a lista de reservas atualizada
+        salvar_reservas(reservas)
+        
+        return jsonify(reserva), 200  # Retorna a reserva atualizada com status 200
+    else:
+        return jsonify({'message': 'Reserva não encontrada'}), 404  # Caso não encontre a reserva
+
 
 # Rota para deletar uma reserva
 @app.route('/reservas/<int:id>', methods=['DELETE'])

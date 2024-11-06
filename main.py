@@ -41,4 +41,3 @@ def menu():
 
 # Executa o menu
 menu()
-1
