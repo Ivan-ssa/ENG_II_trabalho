@@ -1,5 +1,15 @@
+import sys
+import os
+
+# Adiciona a raiz do projeto ao caminho de importação
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+
+
 import unittest
-from morador import Morador, lista_moradores  # Certifique-se de importar a lista
+
+from morador import Morador, lista_moradores
 
 class TestMorador(unittest.TestCase):
 
@@ -40,4 +50,6 @@ coamndo do teste unitario
 
 python -m unittest discover -s test -p "test_*.py"
 
+
+pytest --html=relatorio.html
 """

@@ -19,25 +19,35 @@ class Espaco:
 
     @staticmethod
     def inicializar_espacos():
-        """Verifica se o arquivo existe e inicializa os espaços se estiver vazio."""
+        """Carrega os espaços a partir do JSON ou cria os padrões, garantindo que não haja duplicados."""
         try:
             with open('json/espacos.json', 'r', encoding='utf-8') as file:
-                espacos_salvos = json.load(file)
-                tipos_existentes = {espaco["tipo"] for espaco in lista_espacos}
-                for espaco in espacos_salvos:
-                    if espaco["tipo"] not in tipos_existentes:
-                        lista_espacos.append(Espaco(espaco["tipo"]))
+                dados = json.load(file)
+                ids_existentes = {espaco.id for espaco in lista_espacos}  # IDs já carregados
+                
+                # Processa espaços do JSON
+                espacos = []
+                for espaco_dict in dados:
+                    # Define o tipo fixo como "Churrasqueira"
+                    tipo = "Churrasqueira"
+                    nome = espaco_dict.get("nome", "Espaço de Churrasco")  # Nome pode ser ajustado
+                    espaco = Espaco(tipo, nome, espaco_dict["id"])
+                    
+                    # Verificar se o ID já existe antes de adicionar
+                    if espaco.id not in ids_existentes:
+                        espacos.append(espaco)
+                
+                lista_espacos.extend(espacos)  # Atualiza a lista global
         except FileNotFoundError:
-            # Se o arquivo não existir, cria os espaços padrão
             Espaco.criar_espacos_padrao()
             Espaco.salvar_em_json()
 
     @staticmethod
     def criar_espacos_padrao():
         """Cria o salão de festas e cinco churrasqueiras."""
-        Espaco("Salão de Festas")  # Adiciona o salão de festas
-        for i in range(1, 6):  # Cria cinco churrasqueiras com nomes únicos
-            Espaco(f"Churrasqueira {i}")
+        Espaco("Salão de Festas", "Salão de Festas")  # Adiciona o salão de festas
+        for i in range(1,6):  # Cria cinco churrasqueiras com tipo fixo
+            Espaco("Churrasqueira", f"Espaço de Churrasco {i}")  # Define tipo e nome fixos
 
     @staticmethod
     def salvar_em_json():

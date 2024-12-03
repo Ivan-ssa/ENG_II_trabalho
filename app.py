@@ -1,187 +1,155 @@
+
+from datetime import datetime
 import json
-#add app
 from flask import Flask, jsonify, request
+from funcion_morador import adicionar_morador,deletar_morador
+from funcion_reservas import salvar_reservas,criar_reserva
+from espaco import lista_espacos
+from morador import lista_moradores
+from reserva import Reserva, lista_reserva
 
 app = Flask(__name__)
 
 
-# Função auxiliar para ler dados do arquivo JSON
-def ler_reservas():
-    with open('json/reservas.json', 'r', encoding='utf-8') as file:
-        return json.load(file)
 
-def ler_moradores():
+# Função para carregar dados na inicialização
+def carregar_dados():
+    global lista_moradores, lista_reservas, lista_espacos
     with open('json/moradores.json', 'r', encoding='utf-8') as file:
-        return json.load(file)
-def ler_espacos():
+        lista_moradores = json.load(file)
+    with open('json/reservas.json', 'r', encoding='utf-8') as file:
+        lista_reservas = json.load(file)
     with open('json/espacos.json', 'r', encoding='utf-8') as file:
-        return json.load(file)
+        lista_espacos = json.load(file)
 
+def criar_reserva_apia(data_reserva, espaco_id, morador_id, descricao=""):
+    # Verifica se o morador existe
+    morador = next((m for m in lista_moradores if m.id == morador_id), None)
+    if not morador:
+        return {"erro": "Morador não encontrado"}
 
+    # Verifica se o espaço existe
+    espaco = next((e for e in lista_espacos if e.id == espaco_id), None)
+    if not espaco:
+        return {"erro": "Espaço não encontrado"}
 
-# Função auxiliar para salvar dados no arquivo JSON
-def salvar_reservas(reservas):
-    with open('json/reservas.json', 'w', encoding='utf-8') as file:
-        json.dump(reservas, file, indent=3, ensure_ascii=False)
+    # Cria a reserva
+    reserva = Reserva(
+        data=data_reserva,
+        espaco_id=espaco.id,
+        morador_id=morador.id,
+        descricao=descricao if descricao else None
+    )
 
+    # Salva a reserva no arquivo JSON
+    salvar_reservas(reserva)
 
-def salvar_moradores(moradores):
+    return {
+        "sucesso": True,
+        "reserva": {
+            "data": reserva.data,
+            "espaco_id": reserva.espaco_id,
+            "morador_id": reserva.morador_id,
+            "descricao": reserva.descricao,
+        }
+    }
+# Função para salvar dados antes de encerrar
+def salvar_dados():
     with open('json/moradores.json', 'w', encoding='utf-8') as file:
-        json.dump(moradores, file, indent=3, ensure_ascii=False)
+        json.dump(lista_moradores, file, indent=3, ensure_ascii=False)
+    with open('json/reservas.json', 'w', encoding='utf-8') as file:
+        json.dump(lista_reservas, file, indent=3, ensure_ascii=False)
 
-
-
+# Rotas de CRUD
+# metodos [ GET ] 
 # Rota para listar reservas
 @app.route('/reservas', methods=['GET'])
 def listar_reservas():
-    reservas = ler_reservas()
-    return jsonify(reservas), 200
+    return jsonify(lista_reservas), 200
 
-# listar moradores
+# Rota para listar moradores
 @app.route('/moradores', methods=['GET'])
 def listar_moradores():
-    moradores = ler_moradores()
-    return jsonify(moradores), 200
-#listar espaços
+    return jsonify(lista_moradores), 200
+
+# Rota para listar espaços
 @app.route('/espacos', methods=['GET'])
 def listar_espacos():
-    espacos = ler_espacos()
-    return jsonify(espacos), 200
+    return jsonify(lista_espacos), 200
 
 
-# Rota para adicionar uma nova reserva
-@app.route('/reservas', methods=['POST'])
-def adicionar_reserva():
-    nova_reserva = request.get_json()
-    reservas = ler_reservas()
-    
-    # Adiciona a nova reserva à lista
-    reservas.append(nova_reserva)
-    salvar_reservas(reservas)
-    
-    return jsonify(nova_reserva), 201
 
-
+# metodos [ POST ]
+# Rota para adicionar um novo morador
 @app.route('/moradores', methods=['POST'])
-def adicionar_morador():
+def novo_morador():
     novo_morador = request.get_json()
-    morador = ler_moradores()
+    resposta = adicionar_morador(novo_morador, lista_moradores)
+    if 'erro' in resposta:
+        return jsonify(resposta), 400
+    return jsonify(resposta), 201
+
+
+@app.route("/reservas", methods=["POST"])
+def criar_reserva_api():
+    # Recebe o JSON enviado
+    dados = request.json
+
+    # Verifica se todos os campos obrigatórios estão presentes
+    campos_obrigatorios = ["morador_id", "espaco_id", "data_reserva"]
+    campos_faltando = [campo for campo in campos_obrigatorios if campo not in dados]
+
+    if campos_faltando:
+        # Se faltar algum campo, retorna uma mensagem de erro com os campos faltantes
+        return jsonify({
+            "erro": "Campos obrigatórios faltando",
+            "campos_faltando": campos_faltando
+        }), 400
+
+    # Adiciona o dado na lista de reservas
+    #lista_reservas.append(dados)
     
-    # Adiciona a novo morador à lista
-    morador.append(novo_morador)
-    salvar_moradores(morador)
-    
-    return jsonify(novo_morador), 201
+    # Salva a lista de reservas no arquivo JSON
+    #salvar_reservas()
+
+    # Retorna o mesmo JSON recebido
+    return jsonify(dados), 201  # Retorna o JSON com código 201 para criação bem-sucedida
 
 
 
 # Rota para atualizar uma reserva existente
 @app.route('/reservas/<int:id>', methods=['PUT'])
 def atualizar_reserva(id):
-    reservas = ler_reservas()  # Lê as reservas do arquivo JSON
-    reserva = next((res for res in reservas if res['id'] == id), None)  # Procura a reserva pelo ID
-    
+    dados_atualizados = request.get_json()
+    reserva = next((res for res in lista_reservas if res['id'] == id), None)
     if reserva:
-        # Atualiza a reserva com os novos dados do corpo da requisição
-        dados_atualizados = request.get_json()
         reserva.update(dados_atualizados)
-        
-        # Salva a lista de reservas atualizada
-        salvar_reservas(reservas)
-        
-        return jsonify(reserva), 200  # Retorna a reserva atualizada com status 200
-    else:
-        return jsonify({'message': 'Reserva não encontrada'}), 404  # Caso não encontre a reserva
+        return jsonify(reserva), 200
+    return jsonify({'erro': 'Reserva não encontrada'}), 404
 
 # Rota para deletar uma reserva
 @app.route('/reservas/<int:id>', methods=['DELETE'])
-def deletar_reserva(id):
-    reservas = ler_reservas()
-    reserva = next((res for res in reservas if res['id'] == id), None)
-    
+def excluir_reserva(id):
+    reserva = next((res for res in lista_reservas if res['id'] == id), None)
     if reserva:
-        reservas.remove(reserva)
-        salvar_reservas(reservas)
+        lista_reservas.remove(reserva)
         return jsonify(reserva), 200
-    else:
-        return jsonify({'message': 'Reserva não encontrada'}), 404
+    return jsonify({'erro': 'Reserva não encontrada'}), 404
 
-# deletar o morador.
+# Rota para deletar um morador
 @app.route('/moradores/<int:apartamento>/<bloco>', methods=['DELETE'])
-def deletar_morador(apartamento, bloco):
-    moradores = ler_moradores()
-    morador = next((res for res in moradores if res['apartamento'] == str(apartamento) and res['bloco'] == bloco), None)
-    
-    if morador:
-        moradores.remove(morador)
-        salvar_moradores(moradores)
-        return jsonify(morador), 200
-    else:
-        return jsonify({'message': 'Morador não encontrado'}), 404
+def excluir_morador(apartamento, bloco):
+    resposta = deletar_morador(apartamento, bloco, lista_moradores, lista_reservas)
+    if 'erro' in resposta:
+        return jsonify(resposta), 404
+    return jsonify(resposta), 200
 
+# Inicialização do aplicativo
 if __name__ == '__main__':
-    app.run(debug=True)
+    carregar_dados()  # Carrega os dados ao iniciar o servidor
+    try:
+        app.run(debug=True)
+    finally:
+        salvar_dados()  # Salva os dados ao encerrar o servidor
 
 
-"""
-passos para os testes de CRUD 
-pip install flask
-python app.py inicinado o servidor
-
-
-
-GET http://127.0.0.1:5000/reservas para listar as reservas.
-POST http://127.0.0.1:5000/reservas com um corpo JSON para adicionar uma nova reserva
-
-1. Criar uma Nova Reserva (POST)
-
-
-
-POST /reservas
-Content-Type: application/json
-
-{
-    "id": 2,
-    "espaco_id": "churrasqueira",
-    "morador_id": "456",
-    "data": "02-01-23"
-}
-
-2. Listar Todas as Reservas (GET)
-python
-Copiar código
-
-GET /reservas
-
-3. Atualizar uma Reserva (PUT)
-Para atualizar uma reserva existente, você precisa do ID da reserva e enviar as novas informações. Aqui está um exemplo:
-
-URL: http://127.0.0.1:5000/reservas/<id>
-
-Substitua <id> pelo ID da reserva que você deseja atualizar.
-
-PUT /reservas/2
-
-
-{
-    "espaco_id": "churrasqueira",
-    "morador_id": "456",
-    "data": "03-01-23"
-}
-
-4. Deletar uma Reserva (DELETE)
-Para deletar uma reserva existente, você precisa do ID da reserva. Aqui está um exemplo:
-
-
-
-DELETE /reservas/2
-Método: DELETE
-URL: http://127.0.0.1:5000/reservas/<id> (substitua <id> pelo ID da reserva a ser deletada)
-
-Testar as Rotas:
-
-GET: http://127.0.0.1:5000/reservas
-POST: http://127.0.0.1:5000/reservas com o corpo JSON.
-PUT: http://127.0.0.1:5000/reservas/<id> com o corpo JSON atualizado.
-DELETE: http://127.0.0.1:5000/reservas/<id>.
-"""

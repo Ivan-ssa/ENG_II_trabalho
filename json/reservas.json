@@ -1,20 +1,33 @@
-[
-   {
-      "id": 5,
-      "data": "10-10-25",
-      "espaco_id": 5,
-      "morador_id": "105A"
-   },
-   {
-      "id": 2,
-      "data": "12-12-24",
-      "espaco_id": 2,
-      "morador_id": "100A"
-   },
-   {
-      "id": 3,
-      "data": "12-12-24",
-      "espaco_id": 3,
-      "morador_id": "101A"
-   }
-]
+{
+   "reservas": [
+      {
+         "id": 2,
+         "morador_id": "101A",
+         "espaco_id": 1,
+         "data_reserva": "12-12-24",
+         "descricao": "festa"
+      },
+      {
+         "id": 1,
+         "morador_id": "101A",
+         "espaco_id": 1,
+         "data_reserva": "12-12-2024",
+         "descricao": "Evento de Natal"
+      },
+      {
+         "id": 2,
+         "morador_id": "101A",
+         "espaco_id": 3,
+         "data_reserva": "27-12-45",
+         "descricao": "feta familia"
+      },
+      {
+         "id": 3,
+         "morador_id": "101A",
+         "espaco_id": 3,
+         "data_reserva": "10-10-25",
+         "descricao": "cafe"
+      }
+   ],
+   "proximo_id": 4
+}

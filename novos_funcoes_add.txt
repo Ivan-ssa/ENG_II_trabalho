@@ -1,0 +1,136 @@
+
+def salvar_reservas():
+    """Salva as reservas no arquivo JSON com codificação UTF-8."""
+    reservas_data = [{
+        "id": reserva.id,
+        "espaco_id": reserva.espaco_id,
+        "morador_id": reserva.morador_id,
+        "data": reserva.data,
+        "descricao": reserva.descricao
+    } for reserva in lista_reserva]
+
+    dados = {
+        "reservas": reservas_data,
+        "proximo_id": Reserva.proximo_id
+    }
+
+    os.makedirs('json', exist_ok=True)
+
+    try:
+        with open('json/reservas.json', 'w', encoding='utf-8') as file:
+            json.dump(dados, file, ensure_ascii=False, indent=4)
+            print("Reservas salvas com sucesso!")
+    except Exception as e:
+        print(f"Erro ao salvar reservas: {e}")
+
+Projeto: Sistema de Gerenciamento de Moradores e Reservas
+
+Descrição
+
+Este projeto é um sistema de gerenciamento de moradores e reservas para um condomínio. Ele permite:
+
+Cadastrar moradores.
+Gerenciar reservas de espaços fixos (como salão de festas e churrasqueiras).
+Garantir a integridade dos dados através de validações.
+Persistir dados em arquivos JSON para leitura e gravação.
+Regras de Negócio
+Cadastro de Moradores:
+
+Um morador é associado a um apartamento (número) e a um bloco (letra).
+É proibido registrar duplicatas: um apartamento/bloco só pode ter um morador cadastrado de cada vez.
+O nome do morador:
+Não pode ser vazio.
+Deve conter apenas letras, espaços, apóstrofos e traços.
+O número do apartamento:
+Deve estar nos intervalos válidos: 100-104, 200-204, 300-304, 400-404, 500-504.
+A letra do bloco deve ser uma das seguintes: A, B, C, D, E, F, G.
+Gerenciamento de Reservas:
+
+Um morador pode reservar apenas um espaço por dia inteiro.
+Antes de registrar a reserva, o sistema verifica:
+Se o morador está cadastrado.
+Se já possui uma reserva para a data informada.
+Espaços disponíveis para reserva são fixos e não podem ser alterados.
+Exclusão de Dados:
+
+Ao excluir um morador, todas as reservas associadas a ele também são removidas.
+Reservas só podem ser deletadas se o morador associado for excluído.
+Restrições:
+
+Não é permitido alterar os nomes dos espaços reserváveis.
+Não é permitido criar, excluir ou modificar os espaços disponíveis (regra fixa do sistema).
+Funcionalidades
+Menu Principal
+Adicionar Morador:
+
+Realiza validações de nome, apartamento e bloco.
+Adiciona o morador à lista, garantindo que não haja duplicatas.
+Excluir Morador:
+
+Exclui o morador selecionado e remove todas as reservas associadas a ele.
+Gerenciar Reservas:
+
+Permite que um morador faça uma reserva para um espaço.
+Valida se o morador já possui uma reserva no dia.
+Persistência de Dados:
+
+Os dados de moradores e reservas são salvos em arquivos JSON.
+Ao iniciar o programa, os arquivos JSON são carregados e os objetos são criados em memória.
+CRUD dos Espaços (Regras Específicas):
+
+Leitura: Espaços reserváveis podem ser consultados.
+Atualização: Não é permitido alterar os espaços.
+Alteração de Nome: Não é permitido alterar os nomes dos espaços.
+Exclusão: Não é permitido deletar espaços.
+Estrutura do Código
+Classes
+Morador:
+
+Atributos:
+nome: Nome do morador.
+apartamento: Número do apartamento.
+bloco: Letra do bloco.
+Métodos:
+Validações para o cadastro.
+Reserva:
+
+Atributos:
+data: Data da reserva.
+morador: Referência ao morador que realizou a reserva.
+espaco: Espaço reservado.
+Métodos:
+Validação para verificar se o morador já possui reservas na data.
+Funções Principais
+adicionar_morador():
+
+Solicita os dados do morador e realiza as validações.
+Verifica duplicatas antes de registrar o morador.
+excluir_morador():
+
+Remove o morador e todas as reservas associadas a ele.
+adicionar_reserva():
+
+Solicita a data e o espaço a ser reservado.
+Valida se o morador já possui reserva na data informada.
+carregar_dados():
+
+Lê os arquivos JSON e popula as listas em memória.
+salvar_dados():
+
+Salva os dados atuais de moradores e reservas nos arquivos JSON.
+Persistência de Dados
+Arquivos JSON:
+
+Moradores e reservas são armazenados em dois arquivos distintos:
+moradores.json
+reservas.json
+A estrutura dos arquivos JSON permite a recriação dos objetos ao carregar o programa.
+Processo:
+
+Ao iniciar, o programa lê os arquivos JSON e carrega os dados para as listas em memória.
+Durante a execução, as alterações nas listas são refletidas nos arquivos JSON ao salvar os dados.
+Melhorias Futuras
+Implementar autenticação para garantir que apenas administradores possam editar dados.
+Criar uma interface gráfica (GUI) ou aplicação web para facilitar o uso.
+Adicionar relatórios para acompanhar reservas e ocupação dos espaços.
+Criar testes automatizados para validar todas as regras de negócio.
