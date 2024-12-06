@@ -1,12 +1,45 @@
-from espaco import Espaco, lista_espacos
-from morador import Morador, lista_moradores
-from reserva import Reserva, lista_reserva
-from funcion_reservas import carregar_dados, criar_reserva,salvar_reservas
-from funcion_morador import adicionar_morador, deletar_morador
+from espaco import lista_espacos
+from morador import lista_moradores
+from reserva import lista_reserva,Reserva
+from funcion_reservas import carregar_dados, criar_reserva
+from funcion_morador import adicionar_morador, listar_moradores
+
+carregar_dados()
+
+
+
+
+
+
+# carregar_dados()
+# def validar_morador_test(morador_id):
+#     """Verifica se o morador existe na lista de moradores."""
+#     morador = next((m for m in lista_moradores if m.id == morador_id), None)
+#     if not morador:
+#         print("Morador não encontrado!")
+#         return None  # Retorna None se não encontrar o morador
+#     else:
+#         return morador  # Retorna o objeto morador se encontrado
+
+# # Teste manual
+# morador_id = "101A"
+# print(lista_moradores)
+# # Valida o morador
+# morador = validar_morador_test(morador_id)
+# if morador is None:
+#     print("Morador não encontrado parte 2!")  # Executa essa parte se o morador não for encontrado
+# else:
+#     print(f"Morador encontrado: {morador.id}, {morador.nome}")  # Caso o mor
+# # validar_morador_test("101A")
+
+# Verifique o conteúdo da lista de moradores
+
+
+
 
 
 # Carregar dados do arquivo
-carregar_dados()
+
 # Criando uma reserva manual
 # reserva_teste = Reserva(
 #     data="12-12-2024",  # Data da reserva
@@ -26,6 +59,7 @@ carregar_dados()
 
 # # Chama a função para salvar as reservas no arquivo
 # salvar_reservas()
+# print(lista_moradores)
 def menu():
     while True:
         print("\n--- Menu ---")
@@ -44,16 +78,17 @@ def menu():
         elif opcao == '2':
             criar_reserva()
         elif opcao == '3':
-            print("\nMoradores cadastrados:")
-            for morador in lista_moradores:
-                print(f"ID: {morador.id}, Nome: {morador.nome}")
-        elif opcao == '4':
-           
+            listar_moradores()
+            # print("\nMoradores cadastrados:")
+            # for morador in lista_moradores:
+            #     print(f"ID: {morador.id}, Nome: {morador.nome}")
+        elif opcao == '4':           
             print("\nReservas:")
             for reserva in lista_reserva:
                 print(f"Morador ID: {reserva.morador_id}, ID:{reserva.espaco_id}|{reserva.descricao}|  Data: {reserva.data}")
         elif opcao == '5':
-            deletar_morador()
+            pass
+            #deletar_morador()
         elif opcao == '6':
            
             print("\nEspaços:")
@@ -66,4 +101,10 @@ def menu():
             print("Opção inválida, por favor escolha novamente.")
 
 # Executa o menu
+
+
+
+
+
+
 menu()

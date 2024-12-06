@@ -1,9 +1,10 @@
 # Função para carregar dados dos arquivos JSON
-import json
-from datetime import datetime
-from espaco import Espaco, lista_espacos
+
+
+import json,os
+
 from morador import Morador,lista_moradores
-from reserva import Reserva,lista_reserva
+from reserva import Reserva
 
 
 def buscar_morador_por_id(id_morador):
@@ -17,6 +18,16 @@ def buscar_morador_por_id(id_morador):
 
     print("Morador não encontrado.")
     return None
+
+def listar_moradores():
+    print("Moradores cadastrados:")
+    if lista_moradores:
+        for morador in lista_moradores:
+            #print(f"Tipo de dado de 'morador': {type(morador)}")
+            #print(f"Tipo de dado de 'morador.id': {type(morador.id)}")
+            print(f"ID: {morador.id}, Nome: {morador.nome}")
+    else:
+        print("Nenhum morador cadastrado.")
 
 
 def validar_nome(nome):
@@ -47,129 +58,99 @@ def validar_bloco(bloco):
         return False
 
 def adicionar_morador():
-    while True:
-        nome = input("Digite o nome do morador: ").strip()
-        if validar_nome(nome):
-            break
+    nome = input("Nome do Morador: ")
+    apartamento = input("Número do Apartamento: ")
+    bloco = input("Bloco do Morador: ")
+    
+    # Gerar o ID do morador
+    id_morador = str(apartamento) + bloco
 
-    while True:
-        apartamento = input("Digite o número do apartamento: ").strip()
-        if validar_apartamento(apartamento):
-            apartamento = int(apartamento)
-            break
-
-    while True:
-        bloco = input("Digite a letra do bloco: ").strip().upper()
-        if validar_bloco(bloco):
-            break
-
-    id_morador = f"{apartamento}{bloco}"
-    if any(morador.id == id_morador for morador in lista_moradores):
-        print(f"Já existe um morador com o ID {id_morador}.")
-        return
-
-    try:
+    # Verificar se o morador já existe na lista
+    if any(m.id == id_morador for m in lista_moradores):
+        print(f"Este morador com ID {id_morador} já está cadastrado.")
+    else:
         novo_morador = Morador(nome, apartamento, bloco)
-        print(f"Morador {novo_morador.nome} adicionado com sucesso! ID: {novo_morador.id}")
-    except ValueError as e:
-        print(f"Erro: {e}")
+        lista_moradores.append(novo_morador)
+        print(f"Morador {nome} adicionado com sucesso!")
 
 
-
-def remover_reservas_por_morador(morador_id):
-    global lista_reservas
-    lista_reservas = [reserva for reserva in lista_reservas if reserva.morador_id != morador_id]
-    Reserva.salvar_todas_reservas()
-    print(f"Todas as reservas associadas ao morador ID {morador_id} foram removidas.")
-
-def deletar_morador(morador_id):
-    global lista_moradores
-    morador_existe = any(morador.id == morador_id for morador in lista_moradores)
-    if not morador_existe:
-        print("Morador não encontrado. Não é possível deletar.")
-        return
-
-    lista_moradores = [morador for morador in lista_moradores if morador.id != morador_id]
-    Morador.salvar_todos_moradores()  # Atualiza o arquivo de moradores
-    remover_reservas_por_morador(morador_id)  # Remove reservas do morador
-    print(f"Morador ID {morador_id} e suas reservas foram removidos com sucesso.")
-
-
-
-def deletar_morador(morador_id):
-    if not Morador.validar_id(morador_id):
-        print("ID inválido. O formato deve ser três números seguidos de uma letra maiúscula (exemplo: 101A).")
-        return
-
-    global lista_moradores
-    morador_existe = any(morador.id == morador_id for morador in lista_moradores)
-    if not morador_existe:
-        print("Morador não encontrado.")
-        return
-
-    lista_moradores = [morador for morador in lista_moradores if morador.id != morador_id]
-    Morador.salvar_todos_moradores()
-    remover_reservas_por_morador(morador_id)
-    print(f"Morador com ID {morador_id} e suas reservas foram removidos com sucesso.")
-
-
-# def deletar_morador_e_reservas():
-#     morador_id = input("Digite o ID do morador que deseja deletar: ")
-#     morador_existe = any(morador.id == morador_id for morador in lista_moradores)
+def atualizar_morador_no_arquivo(morador_id, novos_dados):
+    caminho_arquivo = 'json/moradores.json'
     
-#     if not morador_existe:
-#         print("Morador não encontrado. Verifique o ID e tente novamente.")
-#         return
-
-#     # Remove o morador da lista
-#     lista_moradores[:] = [morador for morador in lista_moradores if morador.id != morador_id]
-#     Morador.salvar_todos_moradores()  # Salva a lista atualizada no arquivo JSON
-
-#     # Remove as reservas associadas ao morador
-#     lista_reservas[:] = [reserva for reserva in lista_reservas if reserva.morador_id != morador_id]
-#     Reserva.salvar_todas_reservas()  # Salva a lista atualizada no arquivo JSON
-
-#     print(f"Morador com ID {morador_id} e suas reservas foram deletados com sucesso.")
-
-
-
-
-#def adicionar_morador():
-#     """
-#     Solicita os dados do morador e realiza as validações.
-#     """
-#     while True:
-#         nome = input("Digite o nome do morador: ").strip()
-#         if validar_nome(nome):
-#             break
-
-#     while True:
-#         apartamento = input("Digite o número do apartamento: ").strip()
-#         if validar_apartamento(apartamento):
-#             apartamento = int(apartamento)  # Converte para inteiro após validação
-#             break
-
-#     while True:
-#         bloco = input("Digite a letra do bloco: ").strip().upper()
-#         if validar_bloco(bloco):
-#             break
-
-#     # Verifica duplicidade de apartamento e bloco
-#     for morador in lista_moradores:
-#         if morador.apartamento == apartamento and morador.bloco == bloco:
-#             print(f"Já existe um morador cadastrado no apartamento {apartamento}, bloco {bloco} (Nome: {morador.nome}).")
-#             opcao = input("Deseja sobrescrever o cadastro? (s/n): ").lower()
-#             if opcao == 's':
-#                 lista_moradores.remove(morador)  # Remove o cadastro antigo
-#                 break  # Sai do loop para cadastrar o novo morador
-#             else:
-#                 print("Cadastro não realizado.")
-#                 return  # Encerra a função sem adicionar o novo morador
+    # Procurar o morador na lista de memória
+    morador_encontrado = None
+    for morador in lista_moradores:
+        # Gerar o ID do morador a partir do apartamento e bloco
+        id_atual = f"{morador.apartamento}-{morador.bloco}"
+        
+        # Verificar se o ID gerado corresponde ao ID fornecido
+        if id_atual == morador_id:
+            morador.nome = novos_dados['nome']
+            morador.apartamento = novos_dados['apartamento']
+            morador.bloco = novos_dados['bloco']
+            morador_encontrado = morador
+            #print(f"Morador encontrado: {morador.nome}, {morador.apartamento}-{morador.bloco}")
+            break
     
-#     # Cria e adiciona o novo morador
-#     try:
-#         novo_morador = Morador(nome, apartamento, bloco)
-#         lista_moradores.append(novo_morador)
-#         print(f"Morador {novo_morador.nome} adicionado com sucesso!")
-#     except ValueError as e:
-#         print(f"Erro ao adicionar morador: {e}")
+    if morador_encontrado is None:
+        return f"Morador com ID {morador_id} não encontrado."
+
+    # Atualizar o arquivo JSON
+    if os.path.exists(caminho_arquivo):
+        with open(caminho_arquivo, 'r', encoding='utf-8') as file:
+            try:
+                moradores_existentes = json.load(file)
+                #print(f"Moradores carregados do arquivo: {moradores_existentes}")
+            except json.JSONDecodeError:
+                moradores_existentes = []  # Arquivo vazio ou corrompido
+    else:
+        moradores_existentes = []
+
+    # Atualizar o morador no arquivo JSON
+    for morador in moradores_existentes:
+        if morador['apartamento'] == morador_encontrado.apartamento and morador['bloco'] == morador_encontrado.bloco:
+            morador['nome'] = morador_encontrado.nome
+            #print(f"Morador {morador_encontrado.nome} atualizado no JSON.")
+            break
+    else:
+        # Se o morador não for encontrado no arquivo JSON, adiciona como novo
+        moradores_existentes.append({
+            'nome': morador_encontrado.nome,
+            'apartamento': morador_encontrado.apartamento,
+            'bloco': morador_encontrado.bloco
+        })
+        #print(f"Morador {morador_encontrado.nome} adicionado ao JSON.")
+
+    # Salvar novamente no arquivo JSON
+    with open(caminho_arquivo, 'w', encoding='utf-8') as file:
+        json.dump(moradores_existentes, file, indent=3, ensure_ascii=False)
+        print(f"Arquivo JSON atualizado: {moradores_existentes}")
+
+    return f"Morador {morador_encontrado.nome} atualizado com sucesso."
+
+def deletar_reservas_por_morador(morador_id):
+    try:
+        # Carrega o arquivo JSON
+        with open('json/reservas.json', 'r') as arquivo:
+            dados = json.load(arquivo)
+
+        # Verifique o conteúdo de 'dados' para garantir que seja uma lista de reservas
+        #print(dados)  # Remova após a depuração
+
+        # Filtra as reservas que NÃO pertencem ao morador
+        novas_reservas = [reserva for reserva in dados if reserva['morador_id'] != morador_id]
+
+        # Atualiza o conteúdo do JSON com as novas reservas
+        with open('json/reservas.json', 'w') as arquivo:
+            json.dump(novas_reservas, arquivo, indent=4)
+
+        #print(f"Reservas do morador com ID {morador_id} foram deletadas com sucesso.")
+        return {"reservas_removidas": len(dados) - len(novas_reservas)}  # Retorna a quantidade de reservas removidas
+    except FileNotFoundError:
+        #print("Erro: O arquivo reservas.json não foi encontrado.")
+        return {"erro": "Arquivo não encontrado"}
+    except json.JSONDecodeError:
+        #print("Erro: O conteúdo do arquivo reservas.json não é válido.")
+        return {"erro": "Erro ao processar o arquivo JSON"}
+
+#

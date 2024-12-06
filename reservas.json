@@ -1,0 +1,61 @@
+{
+    "reservas": [
+        {
+            "id": 3,
+            "morador_id": "501G",
+            "espaco_id": 2,
+            "data_reserva": "05-12-2024",
+            "descricao": "teste"
+        },
+        {
+            "id": 1,
+            "morador_id": "501G",
+            "espaco_id": 1,
+            "data_reserva": "05-12-2024",
+            "descricao": "Reserva para reuni\u00c3\u00a3o de condom\u00c3\u00adnio"
+        },
+        {
+            "id": 1,
+            "morador_id": "801G",
+            "espaco_id": 1,
+            "data_reserva": "05-12-2024",
+            "descricao": "Reserva para reuni\u00c3\u00a3o de condom\u00c3\u00adnio"
+        },
+        {
+            "id": 9,
+            "morador_id": "501G",
+            "espaco_id": 3,
+            "data_reserva": "05-12-24",
+            "descricao": "Reserva para festa de anivers\u00c3\u00a1rio"
+        },
+        {
+            "id": 6,
+            "morador_id": "501G",
+            "espaco_id": 4,
+            "data_reserva": "05-12-24",
+            "descricao": "Reserva para festa de anivers\u00c3\u00a1rio"
+        },
+        {
+            "id": 13,
+            "morador_id": "501G",
+            "espaco_id": 6,
+            "data_reserva": "05-12-24",
+            "descricao": "Reserva para festa de anivers\u00c3\u00a1rio"
+        },
+        {
+            "id": 14,
+            "morador_id": "501G",
+            "espaco_id": 1,
+            "data_reserva": "05-12-24",
+            "descricao": "Reserva para festa de anivers\u00c3\u00a1rio"
+        },
+        {
+            "id": 15,
+            "morador_id": "501G",
+            "espaco_id": 2,
+            "data_reserva": "05-12-24",
+            "descricao": "Reserva para festa de anivers\u00c3\u00a1rio"
+        }
+    ],
+    "proximo_id": 10
+}

@@ -3,30 +3,29 @@ import json
 import os
 from datetime import datetime
 from espaco import Espaco, lista_espacos
-from morador import Morador,lista_moradores
-from reserva import Reserva, lista_reserva
-
-
-
-
+from morador import lista_moradores,carregar_moradores
+from reserva import Reserva, lista_reserva,carregar_reservas
 
 def carregar_dados():
-    global lista_espacos  # Declarar global antes de qualquer uso
+    global lista_espacos,lista_moradores
     try:
-        # Carregar moradores
-        with open('json/moradores.json', 'r', encoding='utf-8') as file:
-            moradores = json.load(file)
-            if isinstance(moradores, list):  # Certifique-se de que é uma lista
-                for morador in moradores:
-                    if isinstance(morador, dict):  # Cada item deve ser um dicionário
-                        Morador(**morador)
-
+        carregar_moradores()
+        carregar_reservas()
         # Carregar espaços
         Espaco.inicializar_espacos()  # Inicializa os espaços a partir do JSON ou cria os padrões
 
         # Remove duplicações da lista de espaços
         espacos_unicos = {espaco.id: espaco for espaco in lista_espacos}  # Filtra duplicados pelo ID
         lista_espacos = list(espacos_unicos.values())  # Atualiza a lista global com os únicos
+
+    except FileNotFoundError:
+        print("Arquivo de dados não encontrado, criando novo arquivo.")
+        lista_moradores = []  # Se o arquivo não for encontrado, cria uma lista vazia
+        lista_espacos = []  # Se o arquivo não for encontrado, cria uma lista vazia
+
+
+
+
 
 # Carregar reservas
         if not os.path.exists('json/reservas.json'):
@@ -43,42 +42,72 @@ def carregar_dados():
         print("Arquivo não encontrado. Criando dados padrão.")
         carregar_reservas()  # Salva reservas padrão
 
-
-
 def validar_disponibilidade(espaco_id, data):
     """Verifica se o espaço já está reservado na data fornecida."""
     for reserva in lista_reserva:
         if reserva.espaco_id == espaco_id and reserva.data == data:
             raise ValueError("Espaço já reservado para essa data.")
 
+def validar_disponibilidade(espaco_id, data):
+    """Verifica se o espaço já está reservado na data fornecida."""
+    for reserva in lista_reserva:
+        if reserva.espaco_id == espaco_id and reserva.data == data:
+            raise ValueError("Espaço já reservado para essa data.")
+    return True
+
+def validar_morador(morador_id):
+    """Verifica se o morador existe na lista de moradores."""
+    morador = next((m for m in lista_moradores if m.id == morador_id), None)
+    if not morador:
+        raise ValueError("Morador não encontrado.")
+    return morador
+
+def validar_espaco(espaco_id):
+    """Verifica se o espaço existe na lista de espaços."""
+    espaco = next((e for e in lista_espacos if e.id == espaco_id), None)
+    if not espaco:
+        raise ValueError("Espaço não encontrado.")
+    return espaco
+
+def validar_data(data_reserva):
+    """Verifica se a data está no formato correto e é válida."""
+    try:
+        datetime.strptime(data_reserva, "%d-%m-%y")
+        return data_reserva
+    except ValueError:
+        raise ValueError("Data inválida. Use o formato DD-MM-AA.")
+
 def criar_reserva():
     # Recebe o ID do morador
-    morador_id = input("Digite o ID do morador: ")
+    morador_id = str(input("Digite o ID do morador: "))
 
-    # Verifica se o morador existe
-    morador = next((m for m in lista_moradores if m.id == morador_id), None)
+    # Valida o morador
+    morador = validar_morador(morador_id)
     if not morador:
         print("Morador não encontrado!")
         return
 
-    # Recebe a data da reserva
+    # Recebe e valida a data da reserva
     data_reserva = input("Digite a data da reserva (DD-MM-AA): ")
+    try:
+        data_reserva = validar_data(data_reserva)  # Supondo que validar_data retorne a data formatada
+    except ValueError:
+        print("Data inválida!")
+        return
 
-    # Exibe espaços disponíveis
+    # Exibe os espaços disponíveis
     print("\nEspaços disponíveis:")
     for espaco in lista_espacos:
         print(f"{espaco.id} - {espaco.nome}")
 
-    # Recebe a escolha do espaço
-    espaco_id = int(input("Selecione o número do espaço que deseja reservar: "))
-
-    # Verifica se o espaço existe
-    espaco = next((e for e in lista_espacos if e.id == espaco_id), None)
+    # Solicita o ID do espaço ao usuário, valida e retorna o espaço
+    espaco_id = input("Selecione o número do espaço que deseja reservar: ")
+    espaco = validar_espaco(espaco_id)
     if not espaco:
-        print("Espaço não encontrado!")
+        print("Espaço inválido!")
         return
 
-    # Recebe uma descrição opcional
+    # Solicita a descrição da reserva (opcional)
     descricao = input("Digite uma descrição para a reserva (opcional): ")
 
     # Cria a reserva
@@ -89,78 +118,174 @@ def criar_reserva():
         descricao=descricao if descricao else None
     )
 
-    # Salva a reserva no arquivo JSON
-    salvar_reservas(reserva)
-    print("\nReserva criada e salva com sucesso!")
+    # A função `salvar_em_json_reserva` já garante que a reserva será salva no arquivo JSON
+    print("Reserva criada com sucesso!")
 
 
 
 
-def salvar_reservas(reserva):
-    global lista_reserva  # Tornando a variável lista_reserva acessível aqui
 
-    # Adiciona a nova reserva à lista de reservas
-    lista_reserva.append(reserva)
-    print("Reserva salva com sucesso!")
-
-     # Cria um dicionário com os dados da reserva
-    reserva_dict = {      
-                
-        "id": reserva.id,
-        "morador_id": reserva.morador_id,  # ID do morador
-        "espaco_id": reserva.espaco_id,    # ID do espaço
-        "data_reserva": reserva.data,      # Data da reserva
-        "descricao": reserva.descricao     # Descrição (se houver)
-    }
-
-    # Verifica se o arquivo de reservas já existe
-    if os.path.exists('json/reservas.json'):
-        # Se o arquivo existe, carrega os dados existentes
-        with open('json/reservas.json', 'r', encoding='utf-8') as file:
-            dados_reservas = json.load(file)
-    else:
-        # Se não existe, cria uma estrutura inicial para o arquivo JSON
-        dados_reservas = {"reservas": [], "proximo_id": 1}
-
-    # Adiciona a nova reserva à lista de reservas
-    dados_reservas["reservas"].append(reserva_dict)
-
-    # Atualiza o próximo ID para o próximo item a ser adicionado
-    dados_reservas["proximo_id"] = len(dados_reservas["reservas"]) + 1
-
-    # Salva os dados atualizados no arquivo JSON
-    with open('json/reservas.json', 'w', encoding='utf-8') as file:
-        json.dump(dados_reservas, file, indent=4, ensure_ascii=False)
-
-    print("Reserva salva com sucesso no arquivo JSON!")
-    
 
 
 
 def carregar_reservas():
-    global lista_reserva  # Acessando a lista global de reservas
     try:
-        # Verificando se o arquivo JSON existe
-        if os.path.exists('json/reservas.json'):
-            with open('json/reservas.json', 'r', encoding='utf-8') as file:
-                dados_reservas = json.load(file)
+        # Carrega as reservas do arquivo JSON
+        with open('json/reservas.json', 'r') as arquivo:
+            reservas = json.load(arquivo)
 
-            # Atualizando o próximo ID
-            Reserva.proximo_id = dados_reservas.get("proximo_id", 1)
+        # Se for uma lista de reservas, defina o próximo ID com base no maior ID
+        if reservas:
+            Reserva.proximo_id = max(reserva['id'] for reserva in reservas) + 1
+        else:
+            Reserva.proximo_id = 1
 
-            # Reconstruindo as reservas a partir dos dados do JSON
-            for reserva_dict in dados_reservas["reservas"]:
-                # Criando um objeto Reserva a partir de cada dicionário
-                reserva = Reserva(
-                    data=reserva_dict["data_reserva"],
-                    espaco_id=reserva_dict["espaco_id"],
-                    morador_id=reserva_dict["morador_id"],
-                    descricao=reserva_dict.get("descricao")
-                )
+        return reservas
     except FileNotFoundError:
-        print("Arquivo de reservas não encontrado, criando novo arquivo.")
-        # Se o arquivo não for encontrado, você pode optar por inicializar a lista de reservas
-        lista_reserva = []
+        print("Erro: O arquivo reservas.json não foi encontrado.")
+        return []
+    except json.JSONDecodeError:
+        print("Erro: O conteúdo do arquivo reservas.json não é válido.")
+        return []
+
+# def criar_reserva():
+#     # Recebe o ID do morador
+#     morador_id = str(input("Digite o ID do morador: "))
+
+#     # Valida o morador
+#     morador = validar_morador(morador_id)
+#     if not morador:
+#         print("Morador não encontrado!")
+#         return
+
+#     # Recebe e valida a data da reserva
+#     data_reserva = input("Digite a data da reserva (DD-MM-AA): ")
+#     try:
+#         data_reserva = validar_data(data_reserva)  # Supondo que validar_data retorne a data formatada
+#     except ValueError:
+#         print("Data inválida!")
+#         return
+
+#     # Exibe os espaços disponíveis
+#     print("\nEspaços disponíveis:")
+#     for espaco in lista_espacos:
+#         print(f"{espaco.id} - {espaco.nome}")
+
+
+#     # Recebe e valida a escolha do espaço
+#     try:
+#         espaco_id = int(input("Selecione o número do espaço que deseja reservar: "))
+#         espaco = validar_espaco(espaco_id)
+#         if not espaco:
+#             print("Espaço inválido!")
+#             return
+#     except ValueError:
+#         print("Seleção inválida! Por favor, insira um número.")
+#         return
+
+#     #Recebe uma descrição opcional
+#     descricao = input("Digite uma descrição para a reserva (opcional): ")
+
+#     # Cria a reserva
+#     reserva = Reserva(
+#         data=data_reserva,
+#         espaco_id=espaco.id,
+#         morador_id=morador.id,
+#         descricao=descricao if descricao else None
+#     )
+
+#     # A função `salvar_em_json_reserva` já garante que a reserva será salva no arquivo JSON
+#     print("Reserva criada com sucesso!")
+
+
+
+
+# def criar_reserva():
+#     # Recebe o ID do morador
+#     morador_id = input("Digite o ID do morador: ")
+
+#     # Verifica se o morador existe
+#     morador = next((m for m in lista_moradores if m.id == morador_id), None)
+#     if not morador:
+#         print("Morador não encontrado!")
+#         return
+
+#     # Recebe a data da reserva
+#     data_reserva = input("Digite a data da reserva (DD-MM-AA): ")
+
+#     # Exibe espaços disponíveis
+#     print("\nEspaços disponíveis:")
+#     for espaco in lista_espacos:
+#         print(f"{espaco.id} - {espaco.nome}")
+
+#     # Recebe a escolha do espaço
+#     espaco_id = int(input("Selecione o número do espaço que deseja reservar: "))
+
+#     # Verifica se o espaço existe
+#     espaco = next((e for e in lista_espacos if e.id == espaco_id), None)
+#     if not espaco:
+#         print("Espaço não encontrado!")
+#         return
+
+#     # Recebe uma descrição opcional
+#     descricao = input("Digite uma descrição para a reserva (opcional): ")
+
+#     # Cria a reserva
+#     reserva = Reserva(
+#         data=data_reserva,
+#         espaco_id=espaco.id,
+#         morador_id=morador.id,
+#         descricao=descricao if descricao else None
+#     )
+    
+#     salvar_reservas()
+    
+
+
+
+
+# def salvar_reservas(reserva):
+#     global lista_reserva  # Tornando a variável lista_reserva acessível aqui
+
+#     # Adiciona a nova reserva à lista de reservas
+#     lista_reserva.append(reserva)
+#     print("Reserva salva com sucesso!")
+
+#      # Cria um dicionário com os dados da reserva
+#     reserva_dict = {      
+                
+#         "id": reserva.id,
+#         "morador_id": reserva.morador_id,  # ID do morador
+#         "espaco_id": reserva.espaco_id,    # ID do espaço
+#         "data_reserva": reserva.data,      # Data da reserva
+#         "descricao": reserva.descricao     # Descrição (se houver)
+#     }
+
+#     # Verifica se o arquivo de reservas já existe
+#     if os.path.exists('json/reservas.json'):
+#         # Se o arquivo existe, carrega os dados existentes
+#         with open('json/reservas.json', 'r', encoding='utf-8') as file:
+#             dados_reservas = json.load(file)
+#     else:
+#         # Se não existe, cria uma estrutura inicial para o arquivo JSON
+#         dados_reservas = {"reservas": [], "proximo_id": 1}
+
+#     # Adiciona a nova reserva à lista de reservas
+#     dados_reservas["reservas"].append(reserva_dict)
+
+#     # Atualiza o próximo ID para o próximo item a ser adicionado
+#     dados_reservas["proximo_id"] = len(dados_reservas["reservas"]) + 1
+
+#     # Salva os dados atualizados no arquivo JSON
+#     with open('json/reservas.json', 'w', encoding='utf-8') as file:
+#         json.dump(dados_reservas, file, indent=4, ensure_ascii=False)
+
+#     print("Reserva salva com sucesso no arquivo JSON!")
+    
+
+
+
+
 
 
 
