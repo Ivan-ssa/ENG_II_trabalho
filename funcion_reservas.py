@@ -14,14 +14,14 @@ def carregar_dados():
         # Carregar espaços
         Espaco.inicializar_espacos()  # Inicializa os espaços a partir do JSON ou cria os padrões
 
-        # Remove duplicações da lista de espaços
-        espacos_unicos = {espaco.id: espaco for espaco in lista_espacos}  # Filtra duplicados pelo ID
-        lista_espacos = list(espacos_unicos.values())  # Atualiza a lista global com os únicos
+    #     # Remove duplicações da lista de espaços
+    #     espacos_unicos = {espaco.id: espaco for espaco in lista_espacos}  # Filtra duplicados pelo ID
+    #     lista_espacos = list(espacos_unicos.values())  # Atualiza a lista global com os únicos
 
-    except FileNotFoundError:
-        print("Arquivo de dados não encontrado, criando novo arquivo.")
-        lista_moradores = []  # Se o arquivo não for encontrado, cria uma lista vazia
-        lista_espacos = []  # Se o arquivo não for encontrado, cria uma lista vazia
+    # except FileNotFoundError:
+    #     print("Arquivo de dados não encontrado, criando novo arquivo.")
+    #     lista_moradores = []  # Se o arquivo não for encontrado, cria uma lista vazia
+    #     lista_espacos = []  # Se o arquivo não for encontrado, cria uma lista vazia
 
 
 
@@ -42,11 +42,11 @@ def carregar_dados():
         print("Arquivo não encontrado. Criando dados padrão.")
         carregar_reservas()  # Salva reservas padrão
 
-def validar_disponibilidade(espaco_id, data):
-    """Verifica se o espaço já está reservado na data fornecida."""
-    for reserva in lista_reserva:
-        if reserva.espaco_id == espaco_id and reserva.data == data:
-            raise ValueError("Espaço já reservado para essa data.")
+# def validar_disponibilidade(espaco_id, data):
+#     """Verifica se o espaço já está reservado na data fornecida."""
+#     for reserva in lista_reserva:
+#         if reserva.espaco_id == espaco_id and reserva.data == data:
+#             raise ValueError("Espaço já reservado para essa data.")
 
 def validar_disponibilidade(espaco_id, data):
     """Verifica se o espaço já está reservado na data fornecida."""
@@ -101,7 +101,7 @@ def criar_reserva():
         print(f"{espaco.id} - {espaco.nome}")
 
     # Solicita o ID do espaço ao usuário, valida e retorna o espaço
-    espaco_id = input("Selecione o número do espaço que deseja reservar: ")
+    espaco_id = int(input("Selecione o número do espaço que deseja reservar: "))
     espaco = validar_espaco(espaco_id)
     if not espaco:
         print("Espaço inválido!")
@@ -128,25 +128,29 @@ def criar_reserva():
 
 
 
-def carregar_reservas():
-    try:
-        # Carrega as reservas do arquivo JSON
-        with open('json/reservas.json', 'r') as arquivo:
-            reservas = json.load(arquivo)
+# def carregar_reservas():
+#     try:
+#         # Carrega as reservas do arquivo JSON
+#         with open('json/reservas.json', 'r', encoding='utf-8') as arquivo:
+#             dados = json.load(arquivo)  # Carrega o JSON inteiro
 
-        # Se for uma lista de reservas, defina o próximo ID com base no maior ID
-        if reservas:
-            Reserva.proximo_id = max(reserva['id'] for reserva in reservas) + 1
-        else:
-            Reserva.proximo_id = 1
+#         # Acessa a lista de reservas dentro do JSON
+#         reservas = dados.get("reservas", [])  # Retorna [] se "reservas" não existir
 
-        return reservas
-    except FileNotFoundError:
-        print("Erro: O arquivo reservas.json não foi encontrado.")
-        return []
-    except json.JSONDecodeError:
-        print("Erro: O conteúdo do arquivo reservas.json não é válido.")
-        return []
+#         # Define o próximo ID com base no maior ID ou no próximo_id do JSON
+#         if reservas:
+#             Reserva.proximo_id = max(reserva['id'] for reserva in reservas) + 1
+#         else:
+#             Reserva.proximo_id = dados.get("proximo_id", 1)  # Fallback para 1 se não houver reservas
+
+#         return reservas
+#     except FileNotFoundError:
+#         print("Erro: O arquivo reservas.json não foi encontrado.")
+#         return []
+#     except json.JSONDecodeError:
+#         print("Erro: O conteúdo do arquivo reservas.json não é válido.")
+#         return []
+
 
 # def criar_reserva():
 #     # Recebe o ID do morador

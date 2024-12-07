@@ -58,20 +58,29 @@ def validar_bloco(bloco):
         return False
 
 def adicionar_morador():
-    nome = input("Nome do Morador: ")
-    apartamento = input("Número do Apartamento: ")
-    bloco = input("Bloco do Morador: ")
-    
+    nome = str(input("Nome do Morador: ")).strip().upper()
+    if not validar_nome(nome):
+        return
+
+    apartamento = str(input("Número do Apartamento: ")).strip().upper()
+    if not validar_apartamento(apartamento):
+        return
+
+    bloco = str(input("Bloco do Morador: ")).strip().upper().upper()
+    if not validar_bloco(bloco):
+        return
+
     # Gerar o ID do morador
     id_morador = str(apartamento) + bloco
 
     # Verificar se o morador já existe na lista
     if any(m.id == id_morador for m in lista_moradores):
-        print(f"Este morador com ID {id_morador} já está cadastrado.")
+        print(f"Este Apartamento com ID {id_morador} já está cadastrado.")
     else:
         novo_morador = Morador(nome, apartamento, bloco)
         lista_moradores.append(novo_morador)
         print(f"Morador {nome} adicionado com sucesso!")
+        
 
 
 def atualizar_morador_no_arquivo(morador_id, novos_dados):
@@ -128,29 +137,93 @@ def atualizar_morador_no_arquivo(morador_id, novos_dados):
 
     return f"Morador {morador_encontrado.nome} atualizado com sucesso."
 
+
+
+
+import json
+
 def deletar_reservas_por_morador(morador_id):
+    """
+    Remove todas as reservas associadas ao morador_id fornecido e retorna as reservas excluídas.
+    
+    Args:
+        morador_id (str): ID do morador cujas reservas serão deletadas.
+    
+    Returns:
+        dict: Informações sobre o resultado da operação, incluindo as reservas removidas.
+    """
     try:
         # Carrega o arquivo JSON
         with open('json/reservas.json', 'r') as arquivo:
             dados = json.load(arquivo)
 
-        # Verifique o conteúdo de 'dados' para garantir que seja uma lista de reservas
-        #print(dados)  # Remova após a depuração
+        # Verifica se a chave 'reservas' existe e é uma lista
+        if not isinstance(dados.get('reservas'), list):
+            return {"erro": "O arquivo JSON não contém uma lista de reservas válida"}
 
+        reservas = dados['reservas']
+
+        # Separa as reservas a serem removidas
+        reservas_removidas = [reserva for reserva in reservas if reserva.get('morador_id') == morador_id]
         # Filtra as reservas que NÃO pertencem ao morador
-        novas_reservas = [reserva for reserva in dados if reserva['morador_id'] != morador_id]
+        novas_reservas = [reserva for reserva in reservas if reserva.get('morador_id') != morador_id]
 
         # Atualiza o conteúdo do JSON com as novas reservas
-        with open('json/reservas.json', 'w') as arquivo:
-            json.dump(novas_reservas, arquivo, indent=4)
+        dados['reservas'] = novas_reservas
 
-        #print(f"Reservas do morador com ID {morador_id} foram deletadas com sucesso.")
-        return {"reservas_removidas": len(dados) - len(novas_reservas)}  # Retorna a quantidade de reservas removidas
+        with open('json/reservas.json', 'w') as arquivo:
+            json.dump(dados, arquivo, indent=4)
+
+        return {
+            "message": "Reservas deletadas com sucesso.",
+            "reservas_removidas": reservas_removidas
+        }
     except FileNotFoundError:
-        #print("Erro: O arquivo reservas.json não foi encontrado.")
-        return {"erro": "Arquivo não encontrado"}
+        return {"erro": "Arquivo reservas.json não encontrado"}
     except json.JSONDecodeError:
-        #print("Erro: O conteúdo do arquivo reservas.json não é válido.")
         return {"erro": "Erro ao processar o arquivo JSON"}
 
-#
+
+
+def deletar_morador_e_reservas(morador_id, moradores_arquivo='json/moradores.json', reservas_arquivo='json/reservas.json'):
+    """
+    Remove o morador e todas as suas reservas associadas.
+    
+    Args:
+        morador_id (str): ID do morador a ser deletado.
+        moradores_arquivo (str): Caminho para o arquivo de moradores.
+        reservas_arquivo (str): Caminho para o arquivo de reservas.
+    
+    Returns:
+        dict: Informações sobre o resultado da operação.
+    """
+    # Deletar morador
+    try:
+        with open(moradores_arquivo, 'r') as arquivo:
+            moradores = json.load(arquivo)
+
+        morador = next((m for m in moradores if f"{m['apartamento']}{m['bloco']}" == morador_id), None)
+
+        if not morador:
+            return {"erro": "Morador não encontrado"}
+
+        # Remove o morador da lista
+        moradores.remove(morador)
+
+        # Atualiza o arquivo
+        with open(moradores_arquivo, 'w') as arquivo:
+            json.dump(moradores, arquivo, indent=4)
+    except FileNotFoundError:
+        return {"erro": "Arquivo moradores.json não encontrado"}
+    except json.JSONDecodeError:
+        return {"erro": "Erro ao processar o arquivo JSON de moradores"}
+
+    # Deletar reservas associadas
+    resultado_reservas = deletar_reservas_por_morador(morador_id)
+
+    # Combinar o resultado
+    return {
+        "message": "Morador e reservas deletados com sucesso.",
+        "morador": morador,
+        **resultado_reservas
+    }

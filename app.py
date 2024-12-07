@@ -3,27 +3,35 @@ import json
 from flask import Flask, jsonify, request
 from morador import Morador, lista_moradores
 from reserva import Reserva
-from funcion_morador import validar_nome,validar_bloco,validar_apartamento,atualizar_morador_no_arquivo,deletar_reservas_por_morador
+from funcion_morador import validar_nome,validar_bloco,validar_apartamento,atualizar_morador_no_arquivo,deletar_morador_e_reservas,deletar_reservas_por_morador
 from funcion_reservas import carregar_dados, validar_data,validar_disponibilidade,validar_espaco,validar_morador
 app = Flask(__name__)
 # Função auxiliar para ler dados do arquivo JSON
 carregar_dados()
     
-# def ler_reservas():
-#     with open('json/reservas.json', 'r', encoding='utf-8') as file:
-#         return json.load(file)
 def ler_reservas():
     try:
-        with open('reservas.json', 'r') as f:
-            reservas = json.load(f)  # Isso deve carregar o JSON e converter para um dicionário/lista
-            return reservas.get('reservas', [])  # Certifique-se de retornar a lista de reservas, caso exista
+        with open('json/reservas.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            return data["reservas"], data["proximo_id"]  # Retorna as reservas e o próximo ID
     except FileNotFoundError:
-        return []  # Se o arquivo não for encontrado, retorna uma lista vazia
-    except json.JSONDecodeError:
-        return []  # Se o JSON estiver mal formatado, retorna uma lista vazia
+        return [], 1  # Se o arquivo não existir, retorna lista vazia e próximo ID como 1
+
+
+
+# def ler_reservas():
+#     try:
+#         with open('reservas.json', 'r', encoding='utf-8') as f:
+#             reservas = json.load(file)  # Isso deve carregar o JSON e converter para um dicionário/lista
+#             return reservas.get('reservas', [])  # Certifique-se de retornar a lista de reservas, caso exista
+#     except FileNotFoundError:
+#         return []  # Se o arquivo não for encontrado, retorna uma lista vazia
+#     except json.JSONDecodeError:
+#         return []  # Se o JSON estiver mal formatado, retorna uma lista vazia
 def ler_moradores():
     with open('json/moradores.json', 'r', encoding='utf-8') as file:
-        return json.load(file)
+        moradores = json.load(file)  # Carrega diretamente a lista de moradores
+        return moradores
 def ler_espacos():
     with open('json/espacos.json', 'r', encoding='utf-8') as file:
         return json.load(file)
@@ -31,9 +39,16 @@ def ler_espacos():
 #########################################################################################################
 
 # Função auxiliar para salvar dados no arquivo JSON
-def salvar_reservas(reservas):
+def salvar_reservas(reservas, proximo_id):
+    # Estrutura do JSON com as reservas e o próximo ID
+    data_to_save = {
+        "reservas": reservas,
+        "proximo_id": proximo_id  # Armazena o próximo ID disponível para uma nova reserva
+    }
+
+    # Salva no arquivo JSON
     with open('json/reservas.json', 'w', encoding='utf-8') as file:
-        json.dump(reservas, file, indent=3, ensure_ascii=False)
+        json.dump(data_to_save, file, indent=3, ensure_ascii=False)
 
 
 def salvar_moradores(moradores):
@@ -70,7 +85,7 @@ def adicionar_reserva():
     try:
         # Obtém os dados da requisição
         dados = request.get_json()
-
+    
         # Valida o morador
         morador_id = dados.get("morador_id")
         if not morador_id:
@@ -88,9 +103,16 @@ def adicionar_reserva():
         if not espaco_id:
             return jsonify({"erro": "O campo 'espaco_id' é obrigatório!"}), 400
         espaco = validar_espaco(espaco_id)
-
+        # Gerar o ID do morador
+               
         # Verifica a disponibilidade
         validar_disponibilidade(espaco_id, data_reserva)
+
+        # Valida a descrição
+        descricao = dados.get("descricao")
+        print(f"Descricao recebida: {descricao}")  # Adicionando um log para depuração
+        if descricao is None or descricao.strip() == "":
+            return jsonify({"erro": "O campo 'descricao' é obrigatório!"}), 400
 
         # Cria a reserva
         descricao = dados.get("descricao", "")
@@ -117,6 +139,7 @@ def adicionar_reserva():
 #@@@@ moradores POST
 
 # Rota para adicionar morador
+
 @app.route('/moradores', methods=['POST'])
 def adicionar_morador():
     try:
@@ -135,8 +158,25 @@ def adicionar_morador():
         if not validar_bloco(bloco):
             return jsonify({"erro": "Letra do bloco inválida. Deve ser entre A e G."}), 400
 
+        # Gera o ID do morador a partir do apartamento e bloco
+        id_morador = f"{apartamento}{bloco}"
+
+        # Lê a lista de moradores do arquivo
+        moradores = ler_moradores()
+
+        # Verifica se o morador já existe
+        if any(morador["apartamento"] == apartamento and morador["bloco"] == bloco for morador in moradores):
+            return jsonify({"erro": f"Morador com apartamento {apartamento} e bloco {bloco} já existe."}), 400
+
         # Cria o morador e adiciona na lista
         novo_morador = Morador(nome, apartamento, bloco)
+
+        # Adiciona o novo morador à lista
+        moradores.append({"nome": novo_morador.nome, "apartamento": novo_morador.apartamento, "bloco": novo_morador.bloco})
+
+        # Salva os moradores atualizados no arquivo
+        salvar_moradores(moradores)
+
         return jsonify({"mensagem": f"Morador {novo_morador.nome} adicionado com sucesso!", "id": novo_morador.id}), 201
 
     except ValueError as e:
@@ -144,57 +184,105 @@ def adicionar_morador():
     except Exception as e:
         return jsonify({"erro": "Erro ao processar a solicitação."}), 500
 
+
+# @app.route('/moradores', methods=['POST'])
+# def adicionar_morador():
+#     try:
+#         dados = request.get_json()
+
+#         # Valida os dados recebidos
+#         nome = dados.get("nome")
+#         apartamento = dados.get("apartamento")
+#         bloco = dados.get("bloco")
+
+#         # Validações usando as funções reaproveitadas
+#         if not validar_nome(nome):
+#             return jsonify({"erro": "Nome inválido. O nome deve conter apenas letras e não pode estar vazio."}), 400
+#         if not validar_apartamento(apartamento):
+#             return jsonify({"erro": "Número de apartamento inválido. Deve estar entre 100-104, 200-204, 300-304, 400-404 ou 500-504."}), 400
+#         if not validar_bloco(bloco):
+#             return jsonify({"erro": "Letra do bloco inválida. Deve ser entre A e G."}), 400
+
+#         # Cria o morador e adiciona na lista
+#         novo_morador = Morador(nome, apartamento, bloco)
+#         return jsonify({"mensagem": f"Morador {novo_morador.nome} adicionado com sucesso!", "id": novo_morador.id}), 201
+
+#     except ValueError as e:
+#         return jsonify({"erro": str(e)}), 400
+#     except Exception as e:
+#         return jsonify({"erro": "Erro ao processar a solicitação."}), 500
+
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ################ PUT RESERVAS ########################
-
+# Rota para adicionar reserva
+# Rota para adicionar reserva
 @app.route("/reservas/<int:id>", methods=["PUT"])
 def atualizar_reserva(id):
     """Atualiza uma reserva existente."""
     try:
-        # Lê as reservas do arquivo JSON
-        reservas = ler_reservas()
+        reservas, proximo_id = ler_reservas()
 
-        # Procura a reserva pelo ID
         reserva_existente = next((res for res in reservas if res["id"] == id), None)
         if not reserva_existente:
             return jsonify({"erro": "Reserva não encontrada!"}), 404
 
-        # Obtém os dados da requisição
         dados = request.get_json()
 
-        # Valida o morador
-        # morador_id = dados.get("morador_id")
-        
-        # if morador_id:  # Atualiza somente se informado
-        #     print(morador_id,"########")
-        #     validar_morador(morador_id)
-        #     reserva_existente["morador_id"] = morador_id
-        #     print(reserva_existente)
+        # Validações de morador, espaço e data
+        morador_id = dados.get("morador_id")
+        if not morador_id:
+            return jsonify({"erro": "O campo 'morador_id' é obrigatório!"}), 400
+        morador = validar_morador(morador_id)
 
-        
-        # # Valida a data da reserva
-        # data_reserva = dados.get("data")
-        # if data_reserva:  # Atualiza somente se informado
-        #     data_reserva = validar_data(data_reserva)
-        #     reserva_existente["data"] = data_reserva
+        data_reserva = dados.get("data")  # Use 'data' em vez de 'data_reserva'
+        if not data_reserva:
+            return jsonify({"erro": "O campo 'data_reserva' é obrigatório!"}), 400
+        data_reserva = validar_data(data_reserva)
 
-        # # Valida o espaço
-        # espaco_id = dados.get("espaco_id")
-        # if espaco_id:  # Atualiza somente se informado
-        #     validar_espaco(espaco_id)
-        #     validar_disponibilidade(espaco_id, reserva_existente["data"])
-        #     reserva_existente["espaco_id"] = espaco_id
-    
-        # Atualiza a descrição
+        espaco_id = dados.get("espaco_id")
+        if not espaco_id:
+            return jsonify({"erro": "O campo 'espaco_id' é obrigatório!"}), 400
+        espaco = validar_espaco(espaco_id)
+
+        # Validação de duplicação: Verifica se já existe uma reserva para o mesmo espaço e data
+        reserva_existente_no_dia = next(
+            (res for res in reservas if res["espaco_id"] == espaco_id and res["data_reserva"] == data_reserva),
+            None
+        )
+        if reserva_existente_no_dia:
+            return jsonify({"erro": "Este espaço já está reservado para a data informada!"}), 400
+
         descricao = dados.get("descricao")
-        if descricao is not None:  # Atualiza somente se informado
+        if not descricao:
+            return jsonify({"erro": "O campo 'descricao' é obrigatório!"}), 400
+
+        nova_reserva = Reserva(
+            data=data_reserva,
+            espaco_id=espaco_id,
+            morador_id=morador.id,
+            descricao=descricao
+        )
+
+        # Atualiza os campos se fornecido
+        descricao = dados.get("descricao")
+        if descricao is not None:
             reserva_existente["descricao"] = descricao
 
-        # Salva a lista de reservas atualizada
-        salvar_reservas(reservas)
+        morador_id = dados.get("morador_id")
+        if morador_id:
+            reserva_existente["morador_id"] = morador_id
 
-        # Retorna a reserva atualizada
+        data = dados.get("data_reserva")  # Usando 'data_reserva'
+        if data:
+            reserva_existente["data_reserva"] = data
+
+        espaco_id = dados.get("espaco_id")
+        if espaco_id:
+            reserva_existente["espaco_id"] = espaco_id
+
+        salvar_reservas(reservas, proximo_id)
+
         return jsonify({
             "mensagem": "Reserva atualizada com sucesso!",
             "reserva": reserva_existente
@@ -206,14 +294,32 @@ def atualizar_reserva(id):
         return jsonify({"erro": "Erro interno no servidor", "detalhes": str(e)}), 500
 
 
-
-
 #__________________________________________________________________________________________-
 # @@@@@@@@@@@@@@@@@     PUT moradores   @@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+
 @app.route('/moradores/<int:apartamento>/<bloco>', methods=['PUT'])
 def atualizar_morador_endpoint(apartamento, bloco):
     novos_dados = request.json
     morador_id = f"{apartamento}-{bloco}"  # Gerar ID corretamente a partir de apartamento e bloco
+    dados = request.get_json()
+
+    # Valida os dados recebidos
+    nome = dados.get("nome")
+    apartamento = dados.get("apartamento")
+    bloco = dados.get("bloco")
+
+    # Validações usando as funções reaproveitadas
+    if not validar_nome(nome):
+        return jsonify({"erro": "Nome inválido. O nome deve conter apenas letras e não pode estar vazio."}), 400
+    if not validar_apartamento(apartamento):
+        return jsonify({"erro": "Número de apartamento inválido. Deve estar entre 100-104, 200-204, 300-304, 400-404 ou 500-504."}), 400
+    if not validar_bloco(bloco):
+        return jsonify({"erro": "Letra do bloco inválida. Deve ser entre A e G."}), 400
+
 
     # Atualizar o morador na lista e no arquivo
     mensagem = atualizar_morador_no_arquivo(morador_id, novos_dados)
@@ -226,47 +332,44 @@ def atualizar_morador_endpoint(apartamento, bloco):
 #  @@@@@@@@@@@@@@@@@    delete morador   @@@@@@@@@@@@@@@@@@@@@@@@
 # 
 
-
 @app.route('/moradores/<int:apartamento>/<bloco>', methods=['DELETE'])
-def deletar_morador_e_reservas(apartamento, bloco):
-    # Gerar o ID do morador
-    morador_id = f"{apartamento}{bloco}"
+def deletar_morador(apartamento, bloco):
+    morador_id = f"{apartamento}{bloco}"  # Gerar ID do morador
+    resultado = deletar_morador_e_reservas(morador_id)
+    status_code = 200 if "erro" not in resultado else 404
+    return jsonify(resultado), status_code
 
-    # Ler moradores do arquivo
-    moradores = ler_moradores()
-    morador = next((res for res in moradores if res['apartamento'] == str(apartamento) and res['bloco'] == bloco), None)
 
-    if morador:
-        # Remover o morador
-        moradores.remove(morador)
-        salvar_moradores(moradores)
 
-        # Remover reservas associadas ao morador
-        resultado_reservas = deletar_reservas_por_morador(morador_id)
-
-        return jsonify({
-            "message": "Morador e reservas deletados com sucesso.",
-            "morador": morador,
-            "reservas_removidas": resultado_reservas
-        }), 200
-    else:
-        return jsonify({'message': 'Morador não encontrado'}), 404
 
 
 #________________________________________________________________________________________
+#  @@@@@@@@@@@@@@@@@    delete reserva   @@@@@@@@@@@@@@@@@@@@@@@@
+@app.route("/reservas/<int:id>", methods=["DELETE"])
+def deletar_reserva(id):
+    """Deleta uma reserva existente."""
+    try:
+        reservas, proximo_id = ler_reservas()
 
-# # Rota para deletar uma reserva
-# @app.route('/reservas/<int:id>', methods=['DELETE'])
-# def deletar_reserva(id):
-#     reservas = ler_reservas()
-#     reserva = next((res for res in reservas if res['id'] == id), None)
-    
-#     if reserva:
-#         reservas.remove(reserva)
-#         salvar_reservas(reservas)
-#         return jsonify(reserva), 200
-#     else:
-#         return jsonify({'message': 'Reserva não encontrada'}), 404
+        # Verifica se a reserva existe
+        reserva_existente = next((res for res in reservas if res["id"] == id), None)
+        if not reserva_existente:
+            return jsonify({"erro": "Reserva não encontrada!"}), 404
+
+        # Remove a reserva da lista
+        reservas = [res for res in reservas if res["id"] != id]
+
+        # Salva as reservas atualizadas no arquivo
+        salvar_reservas(reservas, proximo_id)
+
+        return jsonify({"mensagem": "Reserva deletada com sucesso!"}), 200
+
+    except Exception as e:
+        return jsonify({"erro": "Erro ao deletar a reserva", "detalhes": str(e)}), 500
+
+
+
+
 
 
 if __name__ == '__main__':

@@ -71,30 +71,66 @@ class Reserva:
             with open(caminho_arquivo, 'w', encoding='utf-8') as file:
                 json.dump(dados_reservas, file, indent=4, ensure_ascii=False)
 
+
 def carregar_reservas():
     caminho_arquivo = 'json/reservas.json'
 
-    if os.path.exists(caminho_arquivo):
-        with open(caminho_arquivo, 'r', encoding='utf-8') as file:
-            try:
-                dados_reservas = json.load(file)
+    # Verifica se o arquivo existe
+    if not os.path.exists(caminho_arquivo):
+        # Criar o diretório se não existir
+        os.makedirs(os.path.dirname(caminho_arquivo), exist_ok=True)
 
-                for reserva in dados_reservas.get("reservas", []):
-                    nova_reserva = Reserva(
-                        reserva["data_reserva"], 
-                        reserva["espaco_id"], 
-                        reserva["morador_id"], 
-                        reserva.get("descricao", None), 
-                        reserva["id"]
-                    )
+        # Inicializa o arquivo com estrutura padrão
+        dados_iniciais = {"reservas": [], "proximo_id": 1}
+        with open(caminho_arquivo, 'w', encoding='utf-8') as file:
+            json.dump(dados_iniciais, file, indent=4, ensure_ascii=False)
+        print(f"Arquivo '{caminho_arquivo}' criado com sucesso!")
+
+    # Carregar reservas do arquivo
+    with open(caminho_arquivo, 'r', encoding='utf-8') as file:
+        try:
+            dados_reservas = json.load(file)
+
+            for reserva in dados_reservas.get("reservas", []):
+                nova_reserva = Reserva(
+                    reserva["data_reserva"],
+                    reserva["espaco_id"],
+                    reserva["morador_id"],
+                    reserva.get("descricao", None),
+                    reserva["id"]
+                )
+
+                # Evitar duplicar na lista global
+                if not any(r.id == nova_reserva.id for r in lista_reserva):
+                    lista_reserva.append(nova_reserva)
+        except json.JSONDecodeError:
+            print("Erro ao ler o arquivo JSON. O arquivo pode estar corrompido.")
+
+
+# def carregar_reservas():
+#     caminho_arquivo = 'json/reservas.json'
+
+#     if os.path.exists(caminho_arquivo):
+#         with open(caminho_arquivo, 'r', encoding='utf-8') as file:
+#             try:
+#                 dados_reservas = json.load(file)
+
+#                 for reserva in dados_reservas.get("reservas", []):
+#                     nova_reserva = Reserva(
+#                         reserva["data_reserva"], 
+#                         reserva["espaco_id"], 
+#                         reserva["morador_id"], 
+#                         reserva.get("descricao", None), 
+#                         reserva["id"]
+#                     )
                     
-                    # Evitar duplicar na lista global
-                    if not any(r.id == nova_reserva.id for r in lista_reserva):
-                        lista_reserva.append(nova_reserva)
-            except json.JSONDecodeError:
-                print("Erro ao ler o arquivo JSON. O arquivo pode estar corrompido.")
-    else:
-        print("Arquivo de reservas não encontrado.")
+#                     # Evitar duplicar na lista global
+#                     if not any(r.id == nova_reserva.id for r in lista_reserva):
+#                         lista_reserva.append(nova_reserva)
+#             except json.JSONDecodeError:
+#                 print("Erro ao ler o arquivo JSON. O arquivo pode estar corrompido.")
+#     else:
+#         print("Arquivo de reservas não encontrado.")
 
 
 

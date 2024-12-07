@@ -17,6 +17,7 @@ class Espaco:
         lista_espacos.append(self)
 
 
+
     @staticmethod
     def inicializar_espacos():
         """Carrega os espaços a partir do JSON ou cria os padrões, garantindo que não haja duplicados."""
@@ -26,21 +27,43 @@ class Espaco:
                 ids_existentes = {espaco.id for espaco in lista_espacos}  # IDs já carregados
                 
                 # Processa espaços do JSON
-                espacos = []
                 for espaco_dict in dados:
                     # Define o tipo fixo como "Churrasqueira"
-                    tipo = "Churrasqueira"
-                    nome = espaco_dict.get("nome", "Espaço de Churrasco")  # Nome pode ser ajustado
-                    espaco = Espaco(tipo, nome, espaco_dict["id"])
+                    tipo = espaco_dict.get("tipo", "Churrasqueira")
+                    nome = espaco_dict.get("nome", f"Espaço de Churrasco {espaco_dict['id']}")
+                    id_espaco = espaco_dict["id"]
                     
-                    # Verificar se o ID já existe antes de adicionar
-                    if espaco.id not in ids_existentes:
-                        espacos.append(espaco)
-                
-                lista_espacos.extend(espacos)  # Atualiza a lista global
+                    # Verificar se o ID já existe antes de criar o espaço
+                    if id_espaco not in ids_existentes:
+                        Espaco(tipo, nome, id_espaco)
         except FileNotFoundError:
             Espaco.criar_espacos_padrao()
             Espaco.salvar_em_json()
+
+    # @staticmethod
+    # def inicializar_espacos():
+    #     """Carrega os espaços a partir do JSON ou cria os padrões, garantindo que não haja duplicados."""
+    #     try:
+    #         with open('json/espacos.json', 'r', encoding='utf-8') as file:
+    #             dados = json.load(file)
+    #             ids_existentes = {espaco.id for espaco in lista_espacos}  # IDs já carregados
+                
+    #             # Processa espaços do JSON
+    #             espacos = []
+    #             for espaco_dict in dados:
+    #                 # Define o tipo fixo como "Churrasqueira"
+    #                 tipo = "Churrasqueira"
+    #                 nome = espaco_dict.get("nome", "Espaço de Churrasco")  # Nome pode ser ajustado
+    #                 espaco = Espaco(tipo, nome, espaco_dict["id"])
+                    
+    #                 # Verificar se o ID já existe antes de adicionar
+    #                 if espaco.id not in ids_existentes:
+    #                     espacos.append(espaco)
+                
+    #             lista_espacos.extend(espacos)  # Atualiza a lista global
+    #     except FileNotFoundError:
+    #         Espaco.criar_espacos_padrao()
+    #         Espaco.salvar_em_json()
 
     @staticmethod
     def criar_espacos_padrao():
