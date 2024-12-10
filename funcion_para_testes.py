@@ -34,7 +34,7 @@ def listar_estrutura(caminho_base, ignorar=None, nivel=0):
 
 # Configuração
 caminho_base = "."  # Diretório inicial (atual)
-ignorar = ["node_modules", "__tests__", ".git", ".DS_Store", "*.pyc", "*.pyo"]
+ignorar = ["venv", "__tests__", ".git", ".DS_Store", "*.pyc", "*.pyo"]
 
 # Execução
 print("Estrutura do Projeto:")

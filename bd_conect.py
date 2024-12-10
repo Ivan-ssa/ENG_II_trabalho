@@ -33,3 +33,10 @@ def executar_comando(query, params=None):
     except Exception as e:
         print("Erro ao executar comando:", e)
         return 0
+
+
+
+
+""" (    source Scripts/activate ) debntro do venv
+
+"""

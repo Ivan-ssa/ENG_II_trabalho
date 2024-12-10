@@ -175,32 +175,6 @@ def adicionar_morador():
         return jsonify({"erro": "Erro ao processar a solicitação."}), 500
 
 
-# @app.route('/moradores', methods=['POST'])
-# def adicionar_morador():
-#     try:
-#         dados = request.get_json()
-
-#         # Valida os dados recebidos
-#         nome = dados.get("nome")
-#         apartamento = dados.get("apartamento")
-#         bloco = dados.get("bloco")
-
-#         # Validações usando as funções reaproveitadas
-#         if not validar_nome(nome):
-#             return jsonify({"erro": "Nome inválido. O nome deve conter apenas letras e não pode estar vazio."}), 400
-#         if not validar_apartamento(apartamento):
-#             return jsonify({"erro": "Número de apartamento inválido. Deve estar entre 100-104, 200-204, 300-304, 400-404 ou 500-504."}), 400
-#         if not validar_bloco(bloco):
-#             return jsonify({"erro": "Letra do bloco inválida. Deve ser entre A e G."}), 400
-
-#         # Cria o morador e adiciona na lista
-#         novo_morador = Morador(nome, apartamento, bloco)
-#         return jsonify({"mensagem": f"Morador {novo_morador.nome} adicionado com sucesso!", "id": novo_morador.id}), 201
-
-#     except ValueError as e:
-#         return jsonify({"erro": str(e)}), 400
-#     except Exception as e:
-#         return jsonify({"erro": "Erro ao processar a solicitação."}), 500
 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 

@@ -6,6 +6,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 def validar_morador(morador_id):
+
     """Valida se o morador existe no banco de dados."""
     # Divide o morador_id em apartamento e bloco
     try:
@@ -21,6 +22,75 @@ def validar_morador(morador_id):
         raise ValueError(f"Morador com apartamento {apartamento} e bloco {bloco} não encontrado!")
     
     return morador[0]  # Retorna o primeiro resultado encontrado
+def deletar_reservas_por_morador(morador_id):
+    """
+    Deleta todas as reservas associadas a um morador.
+    
+    Args:
+        morador_id (str): ID do morador cujas reservas devem ser deletadas.
+    
+    Returns:
+        dict: Resultado da operação.
+    """
+    try:
+        query_deletar_reservas = """
+            DELETE FROM reservas
+            WHERE morador_id = %s;
+        """
+        params_deletar_reservas = (morador_id,)
+        
+        linhas_afetadas_reservas = executar_comando(query_deletar_reservas, params_deletar_reservas)
+        
+        if linhas_afetadas_reservas > 0:
+            return {"mensagem": f"Reservas associadas ao morador {morador_id} deletadas com sucesso."}
+        else:
+            return {"erro": "Nenhuma reserva encontrada para o morador."}
+    except Exception as e:
+        return {"erro": f"Erro ao deletar reservas: {str(e)}"}
+
+def deletar_morador_e_reservas(morador_id, moradores_arquivo='json/moradores.json', reservas_arquivo='json/reservas.json'):
+    """
+    Remove o morador e todas as suas reservas associadas.
+    
+    Args:
+        morador_id (str): ID do morador a ser deletado.
+        moradores_arquivo (str): Caminho para o arquivo de moradores.
+        reservas_arquivo (str): Caminho para o arquivo de reservas.
+    
+    Returns:
+        dict: Informações sobre o resultado da operação.
+    """
+    # Deletar morador
+    try:
+        with open(moradores_arquivo, 'r') as arquivo:
+            moradores = json.load(arquivo)
+
+        morador = next((m for m in moradores if f"{m['apartamento']}{m['bloco']}" == morador_id), None)
+
+        if not morador:
+            return {"erro": "Morador não encontrado"}
+
+        # Remove o morador da lista
+        moradores.remove(morador)
+
+        # Atualiza o arquivo
+        with open(moradores_arquivo, 'w') as arquivo:
+            json.dump(moradores, arquivo, indent=4)
+    except FileNotFoundError:
+        return {"erro": "Arquivo moradores.json não encontrado"}
+    except json.JSONDecodeError:
+        return {"erro": "Erro ao processar o arquivo JSON de moradores"}
+
+    # Deletar reservas associadas
+    resultado_reservas = deletar_reservas_por_morador(morador_id)
+
+    # Combinar o resultado
+    return {
+        "message": "Morador e reservas deletados com sucesso.",
+        "morador": morador,
+        **resultado_reservas
+    }
+
 
 # CRUD de Moradores============================================================
 @app.route('/moradores', methods=['GET'])
@@ -123,20 +193,17 @@ def atualizar_morador(apartamento, bloco):
     except Exception as e:
         return jsonify({"erro": "Erro ao processar a solicitação.", "detalhes": str(e)}), 500
 
-
 @app.route('/moradores/<apartamento>/<bloco>', methods=['DELETE'])
 def deletar_morador(apartamento, bloco):
     try:
-        # Validações de entrada
-        if not validar_apartamento(apartamento):
-            return jsonify({"erro": "Número de apartamento inválido. Deve estar entre 100-104, 200-204, 300-304, 400-404 ou 500-504."}), 400
-        if not validar_bloco(bloco):
-            return jsonify({"erro": "Letra do bloco inválida. Deve ser entre A e G."}), 400
+        # Normaliza os parâmetros
+        apartamento = str(apartamento).strip()
+        bloco = str(bloco).strip().upper()
 
         # Verifica se o morador existe no banco
         query_verificar = """
             SELECT * FROM moradores
-            WHERE apartamento = %s AND bloco = %s;
+            WHERE TRIM(apartamento) = %s AND TRIM(bloco) = %s;
         """
         params_verificar = (apartamento, bloco)
         morador_existente = executar_consulta(query_verificar, params_verificar)
@@ -147,22 +214,22 @@ def deletar_morador(apartamento, bloco):
         # Deleta o morador
         query_deletar = """
             DELETE FROM moradores
-            WHERE apartamento = %s AND bloco = %s;
+            WHERE TRIM(apartamento) = %s AND TRIM(bloco) = %s;
         """
-        params_deletar = (apartamento, bloco)
-        linhas_afetadas = executar_comando(query_deletar, params_deletar)
+        linhas_afetadas = executar_comando(query_deletar, params_verificar)
 
         if linhas_afetadas > 0:
-            return jsonify({"mensagem": f"Morador com apartamento {apartamento} e bloco {bloco} deletado com sucesso!"}), 200
+            # Deletar as reservas associadas
+            resultado_reservas = deletar_reservas_por_morador(f"{apartamento}{bloco}")
+            return jsonify({
+                "mensagem": f"Morador com apartamento {apartamento} e bloco {bloco} deletado com sucesso!",
+                **resultado_reservas
+            }), 200
         else:
             return jsonify({"erro": "Erro ao deletar o morador no banco de dados."}), 500
 
     except Exception as e:
         return jsonify({"erro": "Erro ao processar a solicitação.", "detalhes": str(e)}), 500
-
-# CRUD de Moradores=======================================================
-
-
 
 
 # CRUD de Reservas---------------------------------------
@@ -184,19 +251,22 @@ def listar_reservas():
     
     return jsonify(reservas_formatadas)
 
+
+
+
 @app.route("/reservas", methods=["POST"])
 def adicionar_reserva():
     """Recebe os dados e cria uma nova reserva."""
     try:
         # Obtém os dados da requisição
         dados = request.get_json()
-    
+
         # Valida o morador
         morador_id = dados.get("morador_id")
         if not morador_id:
             return jsonify({"erro": "O campo 'morador_id' é obrigatório!"}), 400
 
-        # Verifica se o morador existe no banco de dados, buscando pelo formato correto do morador_id
+        # Verifica se o morador existe no banco de dados
         morador_query = "SELECT * FROM moradores WHERE CONCAT(apartamento, bloco) = %s"
         morador = executar_consulta(morador_query, (morador_id,))
         if not morador:
@@ -237,10 +307,10 @@ def adicionar_reserva():
 
         # Cria a reserva
         insert_reserva_query = """
-            INSERT INTO reservas (espaco_id, data_reserva, descricao)
-            VALUES (%s, %s, %s) RETURNING id_reservas;
+            INSERT INTO reservas (espaco_id, data_reserva, descricao, morador_id)
+            VALUES (%s, %s, %s, %s) RETURNING id_reservas;
         """
-        params = (espaco_id, data_reserva, descricao)
+        params = (espaco_id, data_reserva, descricao, morador_id)
         resultado = executar_comando(insert_reserva_query, params)
 
         # O retorno da função de execução do comando pode ser diretamente o ID gerado.
