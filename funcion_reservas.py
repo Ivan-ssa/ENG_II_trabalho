@@ -5,6 +5,7 @@ from datetime import datetime
 from espaco import Espaco, lista_espacos
 from morador import lista_moradores,carregar_moradores
 from reserva import Reserva, lista_reserva,carregar_reservas
+from funcion_morador import buscar_morador_por_id
 
 def carregar_dados():
     global lista_espacos,lista_moradores
@@ -78,48 +79,108 @@ def validar_data(data_reserva):
         raise ValueError("Data inválida. Use o formato DD-MM-AA.")
 
 def criar_reserva():
-    # Recebe o ID do morador
-    morador_id = str(input("Digite o ID do morador: "))
-
-    # Valida o morador
-    morador = validar_morador(morador_id)
-    if not morador:
-        print("Morador não encontrado!")
-        return
-
-    # Recebe e valida a data da reserva
-    data_reserva = input("Digite a data da reserva (DD-MM-AA): ")
     try:
-        data_reserva = validar_data(data_reserva)  # Supondo que validar_data retorne a data formatada
-    except ValueError:
-        print("Data inválida!")
-        return
+        # Recebe o ID do morador
+        morador_id = str(input("Digite o ID do morador: ")).strip()
+        if not morador_id:
+            raise ValueError("O campo 'morador_id' é obrigatório!")
 
-    # Exibe os espaços disponíveis
-    print("\nEspaços disponíveis:")
-    for espaco in lista_espacos:
-        print(f"{espaco.id} - {espaco.nome}")
+        # Valida o morador
+        morador = validar_morador(morador_id)
 
-    # Solicita o ID do espaço ao usuário, valida e retorna o espaço
-    espaco_id = int(input("Selecione o número do espaço que deseja reservar: "))
-    espaco = validar_espaco(espaco_id)
-    if not espaco:
-        print("Espaço inválido!")
-        return
+        # Recebe e valida a data da reserva
+        data_reserva = input("Digite a data da reserva (DD-MM-AAAA): ").strip()
+        if not data_reserva:
+            raise ValueError("O campo 'data' é obrigatório!")
+        data_reserva = validar_data(data_reserva)
 
-    # Solicita a descrição da reserva (opcional)
-    descricao = input("Digite uma descrição para a reserva (opcional): ")
+        # Exibe os espaços disponíveis
+        print("\nEspaços disponíveis:")
+        for espaco in lista_espacos:
+            print(f"{espaco.id} - {espaco.nome}")
 
-    # Cria a reserva
-    reserva = Reserva(
-        data=data_reserva,
-        espaco_id=espaco.id,
-        morador_id=morador.id,
-        descricao=descricao if descricao else None
-    )
+        # Solicita o ID do espaço ao usuário, valida e retorna o espaço
+        espaco_id = input("Selecione o número do espaço que deseja reservar: ").strip()
+        if not espaco_id:
+            raise ValueError("O campo 'espaco_id' é obrigatório!")
+        espaco = validar_espaco(int(espaco_id))
+        if not espaco:
+            raise ValueError("Espaço inválido!")
 
-    # A função `salvar_em_json_reserva` já garante que a reserva será salva no arquivo JSON
-    print("Reserva criada com sucesso!")
+        # Verifica a disponibilidade do espaço
+        validar_disponibilidade(int(espaco_id), data_reserva)
+
+        # Solicita a descrição da reserva (opcional)
+        descricao = input("Digite uma descrição para a reserva (opcional): ").strip().upper()
+        if not descricao:
+            raise ValueError("O campo 'descricao' é obrigatório!")
+
+        # Cria a reserva
+        nova_reserva = Reserva(
+            morador_id=morador.id,
+            data=data_reserva,
+            espaco_id=espaco.id,
+            descricao=descricao
+        )
+
+        # Retorna a nova reserva simulando um JSON
+        print("Reserva criada com sucesso!")
+        print(f"""
+        "Reserva criada com sucesso!",            
+    "morador_id": {nova_reserva.morador_id},
+    "data": {nova_reserva.data},
+    "espaco_id": {nova_reserva.espaco_id},
+    "descricao": {nova_reserva.descricao}.            
+        """)
+
+    except ValueError as e:
+        print(f"Erro: {e}")
+    except Exception as e:
+        print(f"Erro interno: {e}")
+
+# def criar_reserva():
+#     # Recebe o ID do morador
+#     morador_id = str(input("Digite o ID do morador: "))
+
+#     # Valida o morador
+#     morador = validar_morador(morador_id)
+#     if not morador:
+#         print("Morador não encontrado!")
+#         return
+
+#     # Recebe e valida a data da reserva
+#     data_reserva = input("Digite a data da reserva (DD-MM-AA): ")
+#     try:
+#         data_reserva = validar_data(data_reserva)  # Supondo que validar_data retorne a data formatada
+#     except ValueError:
+#         print("Data inválida!")
+#         return
+
+#     # Exibe os espaços disponíveis
+#     print("\nEspaços disponíveis:")
+#     for espaco in lista_espacos:
+#         print(f"{espaco.id} - {espaco.nome}")
+
+#     # Solicita o ID do espaço ao usuário, valida e retorna o espaço
+#     espaco_id = int(input("Selecione o número do espaço que deseja reservar: "))
+#     espaco = validar_espaco(espaco_id)
+#     if not espaco:
+#         print("Espaço inválido!")
+#         return
+
+#     # Solicita a descrição da reserva (opcional)
+#     descricao = str(input("Digite uma descrição para a reserva (opcional): ")).upper()
+
+#     # Cria a reserva
+#     reserva = Reserva(  
+#         morador_id=morador.id,
+#         data=data_reserva,
+#         espaco_id=espaco.id,        
+#         descricao=descricao if descricao else None
+#     )
+
+#     # A função `salvar_em_json_reserva` já garante que a reserva será salva no arquivo JSON
+#     print("Reserva criada com sucesso!")
 
 
 

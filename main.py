@@ -11,6 +11,7 @@ carregar_dados()
 
 
 
+
 def menu_1():
     while True:
         print("\n--- Menu ---")

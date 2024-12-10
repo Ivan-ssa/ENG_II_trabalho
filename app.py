@@ -17,21 +17,11 @@ def ler_reservas():
     except FileNotFoundError:
         return [], 1  # Se o arquivo não existir, retorna lista vazia e próximo ID como 1
 
-
-
-# def ler_reservas():
-#     try:
-#         with open('reservas.json', 'r', encoding='utf-8') as f:
-#             reservas = json.load(file)  # Isso deve carregar o JSON e converter para um dicionário/lista
-#             return reservas.get('reservas', [])  # Certifique-se de retornar a lista de reservas, caso exista
-#     except FileNotFoundError:
-#         return []  # Se o arquivo não for encontrado, retorna uma lista vazia
-#     except json.JSONDecodeError:
-#         return []  # Se o JSON estiver mal formatado, retorna uma lista vazia
 def ler_moradores():
     with open('json/moradores.json', 'r', encoding='utf-8') as file:
         moradores = json.load(file)  # Carrega diretamente a lista de moradores
         return moradores
+
 def ler_espacos():
     with open('json/espacos.json', 'r', encoding='utf-8') as file:
         return json.load(file)

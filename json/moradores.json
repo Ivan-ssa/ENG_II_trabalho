@@ -1,52 +1,22 @@
 [
-    {
-        "nome": "pedro",
-        "apartamento": "202",
-        "bloco": "G"
-    },
-    {
-        "nome": "Mariana",
-        "apartamento": "500",
-        "bloco": "A"
-    },
-    {
-        "nome": "Mariana",
-        "apartamento": "500",
-        "bloco": "B"
-    },
-    {
-        "nome": "Mariana",
-        "apartamento": "500",
-        "bloco": "F"
-    },
-    {
-        "nome": "pedro silva",
-        "apartamento": "101",
-        "bloco": "B"
-    },
-    {
-        "nome": "Mariana Jobim",
-        "apartamento": "102",
-        "bloco": "B"
-    },
-    {
-        "nome": "Mariana Jobim",
-        "apartamento": "103",
-        "bloco": "B"
-    },
-    {
-        "nome": "pedro wddadewewe silva",
-        "apartamento": "102",
-        "bloco": "A"
-    },
-    {
-        "nome": "pedro wddadewewe silva",
-        "apartamento": "102",
-        "bloco": "A"
-    },
-    {
-        "nome": "pedro  silva",
-        "apartamento": "10",
-        "bloco": "A"
-    }
+   {
+      "nome": "pedro",
+      "apartamento": "202",
+      "bloco": "G"
+   },
+   {
+      "nome": "pedro wddadewewe silva",
+      "apartamento": "102",
+      "bloco": "A"
+   },
+   {
+      "nome": "pedro wddadewewe silva",
+      "apartamento": "102",
+      "bloco": "A"
+   },
+   {
+      "nome": "IVAN PAULO",
+      "apartamento": "100",
+      "bloco": "A"
+   }
 ]
